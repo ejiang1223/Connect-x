@@ -2,9 +2,8 @@ import java.util.Scanner;
 import java.util.Arrays;
 
 public class ConnectX {
-    private char[][] board;
+    private String[][] board;
     private String[] players;
-    private char currentPlayer;
     private int winLength;
     private int rows;
     private int cols;
@@ -86,6 +85,12 @@ public class ConnectX {
                                 if (Arrays.asList(players).contains(name)) {
                                     System.out.println("Player name must be unique.");
                                     continue;
+                                } else if (name.length() > 1) {
+                                    System.out.println("Player name cannot exceed 1 character.");
+                                    continue;
+                                } else if (name.equals(".")){
+                                    System.out.println("Player name cannot be a period.");
+                                    continue;
                                 } else {
                                     players[i] = name;
                                     break;
@@ -102,11 +107,11 @@ public class ConnectX {
                 scanner.nextLine(); // Clear the invalid input
             }
         }
-        board = new char[rows][cols];
+        board = new String[rows][cols];
         // Initialize the board with empty spaces
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                board[i][j] = '.';
+                board[i][j] = ".";
             }
         }
         System.out.println("Game setup complete. Starting game...");
@@ -114,6 +119,36 @@ public class ConnectX {
     }
 
     private void gameLoop() {
+        int currentPlayer = 0;
+        while (true) {
+            for (int i = 0; i < players.length; i++) {
+                printBoard();
+                System.out.println(String.valueOf(players[i]) + "'s turn");
+                while (true) {
+                    System.out.print("Enter column number for your move: ");
+                    try {
+                        int col = scanner.nextInt();
+                        if (checkLegalMove(col)) {
+                            // Make the move on the board
+                            for (int row = rows - 1; row >= 0; row--) {
+                                if (board[row][col].equals(".")) {
+                                    board[row][col] = players[i];
+                                    checkEnd();
+                                }
+                            }
+                            break; // Exit the inner while loop after a valid move
+                        } else {
+                            System.out.println("Invalid move. Please try again.");
+                        }
+                        
+                    } catch (Exception e) {
+                        System.out.println("Invalid input. Please enter a number.");
+                        scanner.nextLine(); // Clear the invalid input
+                    }
+                
+                }
+            }
+        }
     }
 
     // Method to print the game board whenever needed, including row and column numbers
@@ -121,10 +156,28 @@ public class ConnectX {
         for (int i = 0; i < rows; i++) {
             System.out.print("| ");
             for (int j = 0; j < cols; j++) {
-                System.out.print(String.valueOf(board[i][j]) + " ");
+                System.out.print(board[i][j] + " ");
             }
             System.out.println("|");
         }
+    }
+
+    // Method to check if a move is legal
+    private boolean checkLegalMove(int col) {
+        if (col < 0 || col >= cols) {
+            return false;
+        }
+        for (int row = 0; row < rows; row++) {
+            if (board[row][col].equals(".")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Method to check if the game has ended in a win or draw
+    private void checkEnd() {
+        return;
     }
 
     // Test space
