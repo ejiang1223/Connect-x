@@ -107,6 +107,11 @@ public class ConnectX {
                 scanner.nextLine(); // Clear the invalid input
             }
         }
+        System.out.println("Game setup complete. Starting game...");
+        gameLoop();
+    }
+
+    private void gameLoop() {
         board = new String[rows][cols];
         // Initialize the board with empty spaces
         for (int i = 0; i < rows; i++) {
@@ -114,12 +119,6 @@ public class ConnectX {
                 board[i][j] = ".";
             }
         }
-        System.out.println("Game setup complete. Starting game...");
-        gameLoop();
-    }
-
-    private void gameLoop() {
-        int currentPlayer = 0;
         while (true) {
             for (int i = 0; i < players.length; i++) {
                 printBoard();
@@ -133,7 +132,11 @@ public class ConnectX {
                             for (int row = rows - 1; row >= 0; row--) {
                                 if (board[row][col].equals(".")) {
                                     board[row][col] = players[i];
-                                    checkEnd();
+                                    if (!checkEnd(i)) {
+                                        break; // if no win/draw, continue the game
+                                    } else {
+                                        return; // Ends game on win or draw
+                                    }
                                 }
                             }
                             break; // Exit the inner while loop after a valid move
@@ -175,9 +178,58 @@ public class ConnectX {
         return false;
     }
 
-    // Method to check if the game has ended in a win or draw
-    private void checkEnd() {
-        return;
+    // Method to check if the game has ended in a win or draw, called after each move
+    private boolean checkEnd(int currentPlayer) {
+        // Checks for wins horizontally
+        for (int row = 0; row < rows; row++) {
+            // For each row, checks each possible horizontal sequence of winLength cells
+            for (int col = 0; col <= (cols - winLength); col++) {
+                // If any cell in the current sequence does not belong to the current player, 
+                boolean win = true;
+                for (int k = 0; k < winLength; k++) {
+                    if (!board[row][col + k].equals(players[currentPlayer])) {
+                        win = false;
+                        break;
+                    }
+                }
+                // If no cells don't belong to the current player, the current player has won
+                if (win) {
+                    winnerCircle(currentPlayer);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void winnerCircle(int winner) {
+        System.out.println("Player " + players[winner] + " has won!");
+        System.out.println("Final board:");
+        printBoard();
+        while (true) {
+            System.out.println("Play again? Y/N");
+            String response = scanner.nextLine();
+            if (response.equalsIgnoreCase("yes") || response.equalsIgnoreCase("y")) {
+                // Reset the game state for a new game
+                System.out.println("Would you like to return to setup?");
+                String response2 = scanner.nextLine();
+                if (response2.equalsIgnoreCase("yes") || response2.equalsIgnoreCase("y")) {
+                    // Return to setup
+                    System.out.println("Returning to setup...");
+                    gameSetup();
+                } else if (response2.equalsIgnoreCase("no") || response2.equalsIgnoreCase("n")) {
+                    System.out.println("Starting new game...");
+                    gameLoop();
+                } else {
+                    System.out.println("Invalid response. Please enter yes/no.");
+                }
+            } else if (response.equalsIgnoreCase("no") || response.equalsIgnoreCase("n")) {
+                System.out.println("Thanks for playing!");
+                System.exit(0);
+            } else {
+                System.out.println("Invalid response. Please enter yes/no.");
+            }
+        }
     }
 
     // Test space
