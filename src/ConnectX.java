@@ -22,10 +22,10 @@ public class ConnectX {
             System.out.print("Enter number of rows: ");
             try {
                 rows = scanner.nextInt();
-                if (rows > 0) {
+                if (rows > 1) {
                     break;
                 } else {
-                    System.out.println("Number of rows must be positive.");
+                    System.out.println("Number of rows must be greater than 1.");
                 }
             } catch (Exception e) {
                 System.out.println("Invalid input. Please enter a number.");
@@ -37,10 +37,10 @@ public class ConnectX {
             System.out.print("Enter number of columns: ");
             try {
                 cols = scanner.nextInt();
-                if (cols > 0) {
+                if (cols > 1) {
                     break;
                 } else {
-                    System.out.println("Number of columns must be positive.");
+                    System.out.println("Number of columns must be greater than 1.");
                 }
             } catch (Exception e) {
                 System.out.println("Invalid input. Please enter a number.");
@@ -125,8 +125,19 @@ public class ConnectX {
                 System.out.println(String.valueOf(players[i]) + "'s turn");
                 while (true) {
                     System.out.print("Enter column number for your move: ");
+                    String input = scanner.nextLine().trim();
+                    //returns to setup if the user enters "restart"
+                    if (input.equalsIgnoreCase("restart")) {
+                        System.out.println("Restarting game...");
+                        gameSetup();
+                        return;
+                    // exits the game if the user enters "exit"
+                    } else if (input.equalsIgnoreCase("exit")) {
+                        System.out.println("Exiting game...");
+                        System.exit(0);
+                    }
                     try {
-                        int col = scanner.nextInt();
+                        int col = Integer.parseInt(input);
                         if (checkLegalMove(col)) {
                             // Make the move on the board
                             for (int row = rows - 1; row >= 0; row--) {
@@ -166,6 +177,7 @@ public class ConnectX {
     }
 
     // Method to check if a move is legal
+    // illegal moves: full column or out of bounds
     private boolean checkLegalMove(int col) {
         if (col < 0 || col >= cols) {
             return false;
@@ -179,6 +191,8 @@ public class ConnectX {
     }
 
     // Method to check if the game has ended in a win or draw, called after each move
+    // Returns true if the game has ended in a win or if the board is full, false otherwise
+    // When game ends, calls winnerCircle, sends int currentPlayer as the winner, -1 if draw
     private boolean checkEnd(int currentPlayer) {
         // Checks for wins horizontally
         for (int row = 0; row < rows; row++) {
@@ -199,19 +213,52 @@ public class ConnectX {
                 }
             }
         }
-        return false;
+
+        // Checks for wins vertically
+        for (int col = 0; col < cols; col++) {
+            for (int row = 0; row <= (rows - winLength); row++) {
+                boolean win = true;
+                for (int k = 0; k < winLength; k++) {
+                    if (!board[row + k][col].equals(players[currentPlayer])) {
+                        win = false;
+                        break;
+                    }
+                }
+                if (win) {
+                    winnerCircle(currentPlayer);
+                    return true;
+                }
+            }
+        }
+
+        // If no wins found, checks if the board is full for a draw
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (board[row][col].equals(".")) {
+                    return false;
+                }
+            }
+        }
+        winnerCircle(-1); // -1 indicates a draw
+        return true;
     }
 
     public void winnerCircle(int winner) {
-        System.out.println("Player " + players[winner] + " has won!");
-        System.out.println("Final board:");
-        printBoard();
+        if (winner == -1) {
+            System.out.println("The game ended in a draw!");
+            System.out.println("Final board:");
+            printBoard();
+        } else {
+            System.out.println("Player " + players[winner] + " has won!");
+            System.out.println("Final board:");
+            printBoard();
+        }
         while (true) {
             System.out.println("Play again? Y/N");
             String response = scanner.nextLine();
             if (response.equalsIgnoreCase("yes") || response.equalsIgnoreCase("y")) {
                 // Reset the game state for a new game
-                System.out.println("Would you like to return to setup?");
+                System.out.println("Return to setup?");
                 String response2 = scanner.nextLine();
                 if (response2.equalsIgnoreCase("yes") || response2.equalsIgnoreCase("y")) {
                     // Return to setup
@@ -235,6 +282,5 @@ public class ConnectX {
     // Test space
     public static void main(String[] args) {
         ConnectX game = new ConnectX();
-        game.printBoard();
     }
 }
