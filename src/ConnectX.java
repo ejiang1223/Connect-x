@@ -12,12 +12,32 @@ public class ConnectX {
     public ConnectX() {
         scanner = new Scanner(System.in);
         gameSetup();
+        gameControl();
     }
+
+    // Main game loop and control logic
+    private void gameControl() {
+        while (true) {
+            int result = gameLoop();
+            if (result == -2) {
+                continue;
+            } else {
+                boolean reset = winnerCircle(result);
+                if (reset) {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+
 
     // Called from constructor or from reset to initialize a new game
     private void gameSetup() {
 
-        // Prompt the user until a valid number of rows is entered
+        // Prompt the user until a valid number of rows is entered (greater than 1)
         while (true) {
             System.out.print("Enter number of rows: ");
             try {
@@ -32,7 +52,7 @@ public class ConnectX {
                 scanner.nextLine(); // Clear the invalid input
             }
         }
-        // Prompt the user until a valid number of columns is entered
+        // Prompt the user until a valid number of columns is entered (greater than 1)
         while (true) {
             System.out.print("Enter number of columns: ");
             try {
@@ -47,7 +67,7 @@ public class ConnectX {
                 scanner.nextLine(); // Clear the invalid input
             }
         }
-        // Prompt the user until a valid win length is entered
+        // Prompt the user until a valid win length is entered (at least 2 and not exceeding rows or columns)
         while (true) {
             System.out.print("Enter win length: ");
             try {
@@ -65,7 +85,7 @@ public class ConnectX {
                 scanner.nextLine(); // Clear the invalid input
             }
         }
-        // Prompt the user until a valid number of players is entered
+        // Prompt the user until a valid number of players is entered (at least 2)
         while (true) {
             System.out.print("Enter number of players: ");
             try {
@@ -108,10 +128,10 @@ public class ConnectX {
             }
         }
         System.out.println("Game setup complete. Starting game...");
-        gameLoop();
+        return;
     }
 
-    private void gameLoop() {
+    private int gameLoop() {
         board = new String[rows][cols];
         // Initialize the board with empty spaces
         for (int i = 0; i < rows; i++) {
@@ -130,8 +150,12 @@ public class ConnectX {
                     if (input.equalsIgnoreCase("restart")) {
                         System.out.println("Restarting game...");
                         gameSetup();
-                        return;
+                        return -2;
                     // exits the game if the user enters "exit"
+                    } else if (input.equalsIgnoreCase("reset")) {
+                        System.out.println("Resetting game...");
+                        gameSetup();
+                        return -2;
                     } else if (input.equalsIgnoreCase("exit")) {
                         System.out.println("Exiting game...");
                         System.exit(0);
@@ -140,13 +164,15 @@ public class ConnectX {
                         int col = Integer.parseInt(input);
                         if (checkLegalMove(col)) {
                             // Make the move on the board
+                            // for loop finds lowest empty row to place token
                             for (int row = rows - 1; row >= 0; row--) {
                                 if (board[row][col].equals(".")) {
                                     board[row][col] = players[i];
-                                    if (!checkEnd(i)) {
-                                        break; // if no win/draw, continue the game
+                                    int result = checkEnd(i);
+                                    if (result == -2) {
+                                        break; // When valid move is made, break out of locator for loop.
                                     } else {
-                                        return; // Ends game on win or draw
+                                        return result; // When win or draw, return result to GameControl
                                     }
                                 }
                             }
@@ -157,7 +183,6 @@ public class ConnectX {
                         
                     } catch (Exception e) {
                         System.out.println("Invalid input. Please enter a number.");
-                        scanner.nextLine(); // Clear the invalid input
                     }
                 
                 }
@@ -193,12 +218,13 @@ public class ConnectX {
     // Method to check if the game has ended in a win or draw, called after each move
     // Returns true if the game has ended in a win or if the board is full, false otherwise
     // When game ends, calls winnerCircle, sends int currentPlayer as the winner, -1 if draw
-    private boolean checkEnd(int currentPlayer) {
+    private int checkEnd(int currentPlayer) {
         // Checks for wins horizontally
         for (int row = 0; row < rows; row++) {
             // For each row, checks each possible horizontal sequence of winLength cells
             for (int col = 0; col <= (cols - winLength); col++) {
                 // If any cell in the current sequence does not belong to the current player, 
+                // the current player has not won, continues to next sequence
                 boolean win = true;
                 for (int k = 0; k < winLength; k++) {
                     if (!board[row][col + k].equals(players[currentPlayer])) {
@@ -206,10 +232,10 @@ public class ConnectX {
                         break;
                     }
                 }
-                // If no cells don't belong to the current player, the current player has won
+                // If all cells belong to the current player in the sequence, the current player has won
+                // calls winnerCircle with the current player as the winner to end the game
                 if (win) {
-                    winnerCircle(currentPlayer);
-                    return true;
+                    return currentPlayer;
                 }
             }
         }
@@ -225,8 +251,39 @@ public class ConnectX {
                     }
                 }
                 if (win) {
-                    winnerCircle(currentPlayer);
-                    return true;
+                    return currentPlayer;
+                }
+            }
+        }
+
+        // Checks for wins diagonally, down-right
+        for (int row = 0; row <= (rows - winLength); row++) {
+            for (int col = 0; col <= (cols - winLength); col++) {
+                boolean win = true;
+                for (int k = 0; k < winLength; k++) {
+                    if (!board[row + k][col + k].equals(players[currentPlayer])) {
+                        win = false;
+                        break;
+                    }
+                }
+                if (win) {
+                    return currentPlayer;
+                }
+            }
+        }
+
+        // Checks for wins diagonally, down-left
+        for (int row = 0; row <= (rows - winLength); row++) {
+            for (int col = winLength - 1; col < cols; col++) {
+                boolean win = true;
+                for (int k = 0; k < winLength; k++) {
+                    if (!board[row + k][col - k].equals(players[currentPlayer])) {
+                        win = false;
+                        break;
+                    }
+                }
+                if (win) {
+                    return currentPlayer;
                 }
             }
         }
@@ -235,15 +292,15 @@ public class ConnectX {
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 if (board[row][col].equals(".")) {
-                    return false;
+                    return -2;
                 }
             }
         }
-        winnerCircle(-1); // -1 indicates a draw
-        return true;
+        return -1;
     }
 
-    public void winnerCircle(int winner) {
+    // Handles the game outcome and offers to play again
+    public boolean winnerCircle(int winner) {
         if (winner == -1) {
             System.out.println("The game ended in a draw!");
             System.out.println("Final board:");
@@ -255,24 +312,25 @@ public class ConnectX {
         }
         while (true) {
             System.out.println("Play again? Y/N");
-            String response = scanner.nextLine();
+            String response = scanner.nextLine().trim();
             if (response.equalsIgnoreCase("yes") || response.equalsIgnoreCase("y")) {
                 // Reset the game state for a new game
                 System.out.println("Return to setup?");
-                String response2 = scanner.nextLine();
+                String response2 = scanner.nextLine().trim();
                 if (response2.equalsIgnoreCase("yes") || response2.equalsIgnoreCase("y")) {
                     // Return to setup
                     System.out.println("Returning to setup...");
                     gameSetup();
+                    return true;
                 } else if (response2.equalsIgnoreCase("no") || response2.equalsIgnoreCase("n")) {
                     System.out.println("Starting new game...");
-                    gameLoop();
+                    return true;
                 } else {
                     System.out.println("Invalid response. Please enter yes/no.");
                 }
             } else if (response.equalsIgnoreCase("no") || response.equalsIgnoreCase("n")) {
                 System.out.println("Thanks for playing!");
-                System.exit(0);
+                return false;
             } else {
                 System.out.println("Invalid response. Please enter yes/no.");
             }
