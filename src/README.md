@@ -25,6 +25,7 @@ After each drop, the program will then check for either a win or a draw. If neit
 ## Setup
 
 ```bash
+* Note: Only tested on Mac
 git clone https://github.com/ejiang1223/Connect-x
 cd Connect-x
 cd src
